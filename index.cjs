@@ -1,34 +1,32 @@
 require("dotenv").config();
 const express = require("express");
-
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware: parse raw body ONLY for /webhook route
+// Middleware to parse raw body for webhooks
 app.use("/webhook", express.raw({ type: "application/json" }));
 
-// Home route
+// Simple GET to verify server is running
 app.get("/", (req, res) => {
   res.send("✅ Shopify backend is running!");
 });
 
-// Webhook route (HMAC skipped for testing)
+// TEMP: Disable HMAC check to confirm Shopify hits the endpoint
 app.post("/webhook", (req, res) => {
-  console.log("🔔 Webhook hit (HMAC disabled)");
-  console.log("🧾 Raw Body:", req.body?.toString());
-
   try {
-    const body = JSON.parse(req.body.toString());
-    console.log("📦 Parsed payload:", body);
+    const rawBody = req.body.toString("utf8");
+    console.log("🟢 Webhook received:");
+    console.log("🔸 Raw:", rawBody);
+    const json = JSON.parse(rawBody);
+    console.log("📦 Parsed JSON:", json);
+    res.status(200).send("✅ Received without HMAC check");
   } catch (err) {
-    console.error("❌ JSON parse error:", err);
+    console.error("❌ Error parsing:", err);
+    res.status(400).send("Bad Request");
   }
-
-  res.status(200).send("✅ Webhook received (no HMAC check)");
 });
 
-// Start server on Railway-compatible IP
+// Start the server
 app.listen(PORT, "0.0.0.0", () => {
   console.log(`✅ Server listening on 0.0.0.0:${PORT}`);
-  console.log(`🔥 LIVE at 0.0.0.0:${PORT} 🔥`);
 });
